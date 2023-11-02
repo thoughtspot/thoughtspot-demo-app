@@ -38,3 +38,6 @@
   }
 }
 
+[data-testid="tsEmbed"]{
+  width:100%;
+}
