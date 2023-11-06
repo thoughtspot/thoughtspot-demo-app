@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, ReactNode, ReactElement } from 'react';
-import { init,  AuthType, Page, EmbedEvent, Action, HostEvent, RuntimeFilterOp} from '@thoughtspot/visual-embed-sdk';
+import { init,  AuthType, Page, EmbedEvent, Action, HostEvent, RuntimeFilterOp, executeTML, executeTMLInput, AnswerService} from '@thoughtspot/visual-embed-sdk';
 import {
     FiHome,
     FiTrendingUp,
@@ -12,6 +12,7 @@ import {
   } from 'react-icons/fi';
   import {
     LiveboardEmbed,
+    SearchEmbed,
     useEmbedRef
   } from "@thoughtspot/visual-embed-sdk/lib/src/react";
 //import demographicImage from './demographics.png'
@@ -31,6 +32,9 @@ import storeImage from './images/store.png'
 import salesImage from './images/sales.png'
 import categoriesImage from './images/categories.png'
 import { link } from 'fs';
+import BrowsePage from './Browse';
+import { servicesVersion } from 'typescript';
+import { CustomActionPayload } from '@thoughtspot/visual-embed-sdk/lib/src/types';
 
 enum SelectedRole {
     ADMIN = 'Admin',
@@ -45,8 +49,7 @@ export enum SelectedTab {
     CUSTOMER = 'Customer Insights',
     STORE = 'Store Insights',
     CATEGORY = 'Category Insights',
-    MY = "My Insights",
-    NEW = "Create"
+    MY = "My Liveboards",
 }
 type RESTFilter = {
     col1: string,
@@ -61,13 +64,17 @@ type RESTFilter = {
 
 interface TabViewProps{
     tsURL: string,
+    worksheet: string
 }
 const Tabs = (props: TabViewProps) =>{
     const{
         tsURL,
+        worksheet
     } = props
     const ref = useRef<any>(null);
+    const searchRef = useRef<any>(null);
     const embedRef = useEmbedRef<typeof LiveboardEmbed>();
+    const searchEmbedRef = useEmbedRef<typeof SearchEmbed>();
     const [selectedTab, setSelectedTab] = useState(SelectedTab.ALL)
     const [categoryFilterValue, setCategoryFilterValue] = useState([])
     const [categoryTSFilter, setCategoryTSFilter] = useState({})
@@ -84,9 +91,14 @@ const Tabs = (props: TabViewProps) =>{
 
     const [selectedRole, setSelectedRole] = useState(SelectedRole.ADMIN);
     const [showRoleSelector, setShowRoleSelector] = useState(false);
- 
+    const [myLiveboardId, setMyLiveboardId] = useState<string | null>(null)
+    
+    const [showNameEdit, setShowNameEdit] = useState(false);
+    const [showNewViz, setShowNewViz] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+
     useEffect(()=>{
-        var url = tsURL+"api/rest/2.0/metadata/answer/data"
+        var url = tsURL+"/api/rest/2.0/metadata/answer/data"
         fetch(url,
         {
             headers: {
@@ -123,11 +135,31 @@ const Tabs = (props: TabViewProps) =>{
                 setCategoryFilterOptions(categoryOptions);
                 setBrandFilterOptions(brandOptions);
         })
-    },[])
 
+    },[])
+    useEffect(()=>{
+        if (showNewViz){
+            ref.current.style.display = 'none'
+            searchRef.current.style.display = 'flex'
+            //searchEmbedRef.current.trigger(HostEvent.ResetSearch)
+        }else{
+            ref.current.style.display = 'flex'
+            searchRef.current.style.display = 'none'     
+        }
+    },[showNewViz])
+    useEffect(()=>{
+        if (myLiveboardId){
+            ref.current.style.display = 'flex'
+            searchRef.current.style.display = 'none';
+            embedRef.current.navigateToLiveboard(myLiveboardId);
+        }else{
+            ref.current.style.display = 'none'
+        }
+    }, [myLiveboardId])
     useEffect(()=>{
         if (!embedRef.current || !ref.current) return
-        if (selectedTab == SelectedTab.ALL){
+        searchRef.current.style.display = 'none'
+        if (selectedTab == SelectedTab.ALL || (selectedTab == SelectedTab.MY && myLiveboardId == null)){
             ref.current.style.display = 'none'
         }else{
             ref.current.style.display = 'flex'
@@ -147,9 +179,12 @@ const Tabs = (props: TabViewProps) =>{
                 liveboardId = "46d8822c-2674-438c-b540-d08eddfe263b";
                 break;
         }
+        if (selectedTab == SelectedTab.MY && myLiveboardId){
+            liveboardId = myLiveboardId;
+        }
+        
         //@ts-ignore
         embedRef.current.navigateToLiveboard(liveboardId);
-        console.log("here",selectedTab);
     },[selectedTab])
 
     useEffect(()=>{
@@ -158,7 +193,67 @@ const Tabs = (props: TabViewProps) =>{
         embedRef.current.prerenderGeneric();
     },[embedRef])
 
+    function TriggerNewLiveboard(name: string, description: string){
+        searchRef.current.style.display = 'none';
+        let liveboard: executeTMLInput = {
+            create_new: true,
+            metadata_tmls: ['liveboard:\n  name: '+name+'\n  description: '+description]
+        }
+        executeTML(liveboard).then((data)=>{
+            let newId = data[0].response.header.id_guid;
+            setMyLiveboardId(newId);
+            setShowNameEdit(false);
+            setIsEditing(false)
+        });
 
+    }
+
+
+    function PinViz(){
+
+        // answerService.executeQuery(
+        //     'mutation addVizToPinboardWithSession($session: BachSessionIdInput!, $vizId: GUID!, $newVizName: String, $newVizDescription: String, $pinboardId: GUID, $newPinboardName: String, $tabId: GUID, $newTabName: String, $pinFromStore: Boolean) {\n  Answer__addVizToPinboard(\n    session: $session\n    vizId: $vizId\n    newVizName: $newVizName\n    newVizDescription: $newVizDescription\n    pinboardId: $pinboardId\n    newPinboardName: $newPinboardName\n    tabId: $tabId\n    newTabName: $newTabName\n    pinFromStore: $pinFromStore\n  ) {\n    pinboardId\n    tabId\n    vizId\n    __typename\n  }\n}\n"}',
+        //     { vizId: embedAsnwerData, pinboardId: myLiveboardId },
+        // );
+        // searchEmbedRef.current.trigger(HostEvent.Pin, {
+        //     liveboardId: myLiveboardId
+        // })
+        embedRef.current.trigger(HostEvent.UpdateFilters)
+        setShowNewViz(false)
+    }
+    function updateAnswerService(e: any){
+        console.log("here",e)
+        const { session, embedAnswerData, contextMenuPoints } = e.data as CustomActionPayload;
+        const answerService = new AnswerService(
+            session,
+            embedAnswerData,
+            tsURL,
+            contextMenuPoints?.selectedPoints,
+        );
+        answerService.executeQuery(
+            'mutation addVizToPinboardWithSession($session: BachSessionIdInput!, $vizId: GUID!, $newVizName: String, $newVizDescription: String, $pinboardId: GUID, $newPinboardName: String, $tabId: GUID, $newTabName: String, $pinFromStore: Boolean) {\n  Answer__addVizToPinboard(\n    session: $session\n    vizId: $vizId\n    newVizName: $newVizName\n    newVizDescription: $newVizDescription\n    pinboardId: $pinboardId\n    newPinboardName: $newPinboardName\n    tabId: $tabId\n    newTabName: $newTabName\n    pinFromStore: $pinFromStore\n  ) {\n    pinboardId\n    tabId\n    vizId\n    __typename\n  }\n}\n',
+            { vizId: embedAnswerData.id, 
+                pinboardId: myLiveboardId, 
+                newVizName: embedAnswerData.name, 
+                newVizDescription: embedAnswerData.description,
+                tabId: null },
+        );
+        searchEmbedRef.current.trigger(HostEvent.Pin, {
+            liveboardId: myLiveboardId
+        })
+        embedRef.current.trigger(HostEvent.UpdateFilters)
+        //setShowNewViz(false)
+    }
+    function LiveboardEdit(){
+        if (isEditing){
+            embedRef.current.trigger(HostEvent.Save)
+            setIsEditing(false)
+        }else{
+            console.log("here!!!")
+            embedRef.current.trigger(HostEvent.Edit,{verificationStatus:true})
+            setIsEditing(true)
+        }
+    }
     function ToggleCategoryFilter(e: any){
         console.log("category", e)
         var filterVals = []
@@ -223,8 +318,6 @@ const Tabs = (props: TabViewProps) =>{
 
     const OtherLinks = [
         { name: SelectedTab.MY, icon: <FiHome/>, onClick:()=>setSelectedTab(SelectedTab.MY),isSelected:selectedTab==SelectedTab.MY ,subMenu:false},
-        { name: SelectedTab.NEW, icon: <FiHome/>, onClick:()=>setSelectedTab(SelectedTab.NEW),isSelected:selectedTab==SelectedTab.NEW ,subMenu:false},
-
     ]
       var overrideStrings = {
         "allItemsAreSelected": "All Categories",
@@ -265,10 +358,17 @@ const Tabs = (props: TabViewProps) =>{
                     <SideNavLink icon={link.icon} linkName={link.name} onClick={link.onClick} isSelected={link.isSelected}></SideNavLink>
                 ))}
                 <div className="border-b-2 border-slate-50 m-2"></div>
+                {OtherLinks.map((link) => (
+                    <SideNavLink icon={link.icon} linkName={link.name} onClick={link.onClick} isSelected={link.isSelected}></SideNavLink>
+                ))}
             </div>
             <div style={{display:'flex',flexDirection:'column',width:"calc(100% - 220px)",overflow:'auto',scrollbarWidth:'thin'}}>
+            
+            
             <div className="p-2 h-36 ml-5" style={{marginBottom: selectedTab ==SelectedTab.ALL ? 15 : 30}}>
                 <div className="flex text-2xl font-bold mb-4">{selectedTab}</div>
+                
+
                 <div style={{display:'flex',flexDirection:'row',height:'50px'}}>
                     <div style={{display:'flex',flexDirection:'column',height:'80px',width:'300px'}}>
                         <MultiSelect 
@@ -279,7 +379,7 @@ const Tabs = (props: TabViewProps) =>{
                             onChange={ToggleCategoryFilter}
                             overrideStrings={overrideStrings}/>
                     </div>
-                    <div style={{marginLeft:10,display:'flex',flexDirection:'column',height:'80px',width:'200px'}}>
+                    <div className='mr-4' style={{marginLeft:10,display:'flex',flexDirection:'column',height:'80px',width:'300px'}}>
                         <MultiSelect 
                             labelledBy={''}
                             hasSelectAll={true} 
@@ -288,12 +388,40 @@ const Tabs = (props: TabViewProps) =>{
                             onChange={ToggleBrandFilter}
                             overrideStrings={brandOverrideStrings}/>
                     </div>
+                    {(selectedTab == SelectedTab.MY && !myLiveboardId) && (
+                        <div onClick={() => setShowNameEdit(true)} className='flex w-44 hover:cursor-pointer hover:bg-green-100 items-center justify-center rounded-lg bg-green-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                            Create New
+                        </div>
+                    )}
+                    {(selectedTab == SelectedTab.MY && myLiveboardId && !showNewViz)  && (
+                        <div onClick={() => setShowNewViz(true)} className='flex w-44 hover:cursor-pointer hover:bg-blue-100 items-center justify-center rounded-lg bg-blue-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                            Add A Viz
+                        </div>
+                    )}
+                    {(selectedTab == SelectedTab.MY && myLiveboardId && !showNewViz)  && (
+                        <div onClick={() => LiveboardEdit()} className='flex w-44 ml-4 hover:cursor-pointer hover:bg-blue-100 items-center justify-center rounded-lg bg-blue-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                            {isEditing ? 'Confirm' : 'Adjust Layout' }
+                        </div>
+                    )}
+                    {(selectedTab == SelectedTab.MY && myLiveboardId && showNewViz)  && (
+                        <div onClick={() => PinViz()} className='flex w-44 hover:cursor-pointer hover:bg-green-100 items-center justify-center rounded-lg bg-green-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                            Confirm
+                        </div>
+                    )}
+                    {(selectedTab == SelectedTab.MY && myLiveboardId && showNewViz)  && (
+                        <div onClick={() => setShowNewViz(false)} className='flex w-44 hover:cursor-pointer hover:bg-grey-100 items-center justify-center rounded-lg bg-grey-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                            Cancel
+                        </div>
+                    )}
                 </div>
 
                 {/* <Input borderRadius={20} width={350} borderColor="blue" backgroundColor={'#ffffff'}></Input> */}
             </div>
 
-            
+
+            {selectedTab==SelectedTab.ALL && (
+            <div className='p-2'></div>
+            )}
             <div className="flex flex-col pl-6 pr-6 space-y-4">
             
                 {(selectedTab == SelectedTab.SALES || selectedTab == SelectedTab.ALL) && 
@@ -316,6 +444,47 @@ const Tabs = (props: TabViewProps) =>{
                         <CategoryTab key={"4"+JSON.stringify(TSRestFilter)} tsURL={tsURL} TSRestFilter={TSRestFilter}></CategoryTab>
                     </Tab>
                 }
+            </div>
+            {showNameEdit && 
+                <LiveboardNameInput triggerNewLiveboard={TriggerNewLiveboard}></LiveboardNameInput>
+            }
+            {(selectedTab == SelectedTab.MY && !showNameEdit) && (
+                <BrowsePage tsURL={tsURL} setMyLiveboardId={setMyLiveboardId} myLiveboardId={myLiveboardId}></BrowsePage>
+            )}
+            {//visibleActions={[Action.AnswerChartSwitcher,Action.Pin,Action.]}
+            }
+            <div style={{display:'none',height:'100%',width:'100%'}} ref={searchRef}>
+                <SearchEmbed
+                    ref={searchEmbedRef}
+                    frameParams={{width:'100%',height:'100%'}}
+                    dataSource={worksheet}
+                    onCustomAction={(e)=>updateAnswerService(e)}
+                    customizations= {
+                        {
+                        style: {
+                        customCSS: {
+                            variables: {
+                            "--ts-var-root-background": "#f6f8fa",
+                            "--ts-var-viz-border-radius": "25px",
+                            "--ts-var-viz-box-shadow":"0px"
+                            },
+                            rules_UNSTABLE: {
+                                '[data-testid="pinboard-header"]': {
+                                    'display': 'none !important'
+                                },
+                                '.ReactModalPortal .ReactModal__Overlay':{
+                                    'background-color': '#ffffff00 !important'
+                                },
+                                '.answer-module__searchCurtain':{
+                                    'background-color': '#ffffff00 !important'
+                                }
+                            }
+                            
+                        }
+                        }
+                    }
+                    }
+                ></SearchEmbed>
             </div>
             <div style={{display:'none',height:'100%',width:'100%'}} ref={ref}>
             <LiveboardEmbed 
@@ -416,6 +585,30 @@ const SideNavLink = (props: SideNavLinkProps) => {
 
             <div className='mr-2'>{icon}</div>
             {linkName}
+        </div>
+    )
+}
+
+
+interface LiveboardNameInputProps{
+    triggerNewLiveboard: (name: string, desc: string) => void
+}
+const LiveboardNameInput = (props: LiveboardNameInputProps) => {
+    const {
+        triggerNewLiveboard
+    } = props
+    const [name, setName] = useState('')
+    const [description, setDescription] = useState('')
+    const handleLiveboardName = () =>{
+        triggerNewLiveboard(name,description)
+    }
+    return (
+        <div className='flex flex-col justify-center items-center h-full'>
+            <input placeholder='Name' className='p-2 w-80 h-12 rounded-lg mb-8' value={name} onChange={(e)=>setName(e.target.value)} ></input>
+            <textarea placeholder='Description' className='p-2 w-80 h-16 rounded-lg mb-8' value={description} onChange={(e)=>setDescription(e.target.value)} ></textarea>
+            <div onClick={handleLiveboardName} className='flex w-44 hover:cursor-pointer hover:bg-green-100 items-center justify-center rounded-lg bg-green-200 font-bold' style={{height:'64px',marginTop:'2px'}}>
+                Create
+            </div>
         </div>
     )
 }

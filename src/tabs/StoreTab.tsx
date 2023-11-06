@@ -10,7 +10,7 @@ export default function StoreTab(props: {tsURL: string; TSRestFilter: any }){
     } = props
     const [data,setData] = useState('')
     useEffect(() => {
-        var url = tsURL+"api/rest/2.0/metadata/answer/data"
+        var url = tsURL+"/api/rest/2.0/metadata/answer/data"
         fetch(url,
         {
             headers: {
