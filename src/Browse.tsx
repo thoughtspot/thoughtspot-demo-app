@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { FiX } from "react-icons/fi"
+import { FiArrowLeft, FiX } from "react-icons/fi"
 
 interface BrowseProps{
     tsURL: string,
@@ -59,9 +59,12 @@ function ContentItem(props: ContentProps){
                     {description}
                 </div>
             </div>
-            <div onClick={()=>setMyLiveboardId(null)} className="flex w-1/4 justify-end items-center">
+            <div onClick={()=>setMyLiveboardId(null)} className="flex w-1/4 justify-end items-center text-blue-400 hover:text-blue-200">
                 {id == myLiveboardId && (
-                    <FiX></FiX>
+                    <div className="flex flex-row space-x-4 mr-2 items-center">
+                        <FiArrowLeft></FiArrowLeft>
+                        Back to Browse
+                    </div>
                 )}
             </div>
             
