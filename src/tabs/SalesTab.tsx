@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { currencyFormatter } from "../util/Util"
 //@ts-ignore
 import salesImage from './images/sales.png'
-import { SelectedTab } from "../Tabs"
+import { SelectedTab } from "../PerformanceHub"
 
 export default function SalesTab(props: { tsURL: string; TSRestFilter: any }){
     const {

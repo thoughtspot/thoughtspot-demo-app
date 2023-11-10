@@ -66,7 +66,7 @@ interface TabViewProps{
     tsURL: string,
     worksheet: string
 }
-const Tabs = (props: TabViewProps) =>{
+const PerformanceHub = (props: TabViewProps) =>{
     const{
         tsURL,
         worksheet
@@ -208,7 +208,15 @@ const Tabs = (props: TabViewProps) =>{
 
     }
 
-
+    function OnPin(){
+        if (myLiveboardId){
+            //embedRef.current.prerenderGeneric();
+            embedRef.current.trigger(HostEvent.Reload)
+            embedRef.current.navigateToLiveboard(myLiveboardId)
+            setShowNewViz(false) 
+        }
+    
+    }
     function PinViz(){
 
         // answerService.executeQuery(
@@ -456,6 +464,7 @@ const Tabs = (props: TabViewProps) =>{
             <div style={{display:'none',height:'100%',width:'100%'}} ref={searchRef}>
                 <SearchEmbed
                     ref={searchEmbedRef}
+                    onPin={OnPin}
                     frameParams={{width:'100%',height:'100%'}}
                     dataSource={worksheet}
                     onCustomAction={(e)=>updateAnswerService(e)}
@@ -523,7 +532,7 @@ const Tabs = (props: TabViewProps) =>{
         </div>
     )
 }
-export default Tabs;
+export default PerformanceHub;
 
 
 

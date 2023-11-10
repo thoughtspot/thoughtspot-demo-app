@@ -1,5 +1,5 @@
 import React, {ReactNode} from 'react';
-import { SelectedTab } from "../Tabs"
+import { SelectedTab } from "../PerformanceHub"
 
 interface TabProps {
     children?: ReactNode,
