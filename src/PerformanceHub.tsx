@@ -513,6 +513,9 @@ const PerformanceHub = (props: TabViewProps) =>{
                             },
                             '.ReactModalPortal .ReactModal__Overlay':{
                                 'background-color': '#ffffff00 !important'
+                            },
+                            '.banner-alert-module__container':{
+                                'display' : 'none !important'
                             }
                         }
                         
