@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import Tabs from './Tabs';
+import PerformanceHub from './PerformanceHub';
 import { AuthStatus, AuthType, getSessionInfo, init } from '@thoughtspot/visual-embed-sdk';
 import { FiUser } from 'react-icons/fi';
 
@@ -55,7 +55,7 @@ function App() {
         </div>
       </div>
       <div style={{height:'calc(100% - 4rem)'}} className='flex w-full overflow-auto'>
-      <Tabs tsURL={tsURL} worksheet={worksheet}></Tabs>
+      <PerformanceHub tsURL={tsURL} worksheet={worksheet}></PerformanceHub>
       </div>
     </div>
   );
