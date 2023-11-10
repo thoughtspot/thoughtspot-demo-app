@@ -31,7 +31,7 @@ export const Tab = (props: TabProps) => {
             <div className="flex flex-col items-center justify-center mb-5">
                 <img  className='h-36' src={image} >
                 </img>
-                <div className='text-sm font-bold text-blue-400 hover:text-blue-200' onClick={()=>isSelected ? setSelectedTab(SelectedTab.ALL) : setSelectedTab(tab)}>
+                <div className='text-sm font-bold text-blue-400 hover:text-blue-200 hover:cursor-pointer' onClick={()=>isSelected ? setSelectedTab(SelectedTab.ALL) : setSelectedTab(tab)}>
                     {isSelected ? 'VIEW ALL' : 'EXPLORE'}
                 </div>           
             </div>

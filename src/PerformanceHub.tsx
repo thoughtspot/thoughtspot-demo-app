@@ -164,13 +164,13 @@ const PerformanceHub = (props: TabViewProps) =>{
         }else{
             ref.current.style.display = 'flex'
         }
-        let liveboardId = "5fc750d7-dd94-4638-995c-31f0434ce2a0"  
+        let liveboardId = ""  
         switch (selectedTab){
             case (SelectedTab.SALES):
                 liveboardId = "a2fee3fb-c67a-4cdc-bdb9-b2dac0e6ec3b";
                 break;
             case (SelectedTab.CATEGORY):
-                liveboardId = "5fc750d7-dd94-4638-995c-31f0434ce2a0";
+                liveboardId = "afc57aa2-8de2-4148-ab71-8f5fa5bed822";
                 break;
             case (SelectedTab.CUSTOMER):
                 liveboardId = "1b191748-0c6b-496c-9ef3-ebf4dee1514d";
