@@ -211,7 +211,7 @@ const PerformanceHub = (props: TabViewProps) =>{
     function OnPin(){
         if (myLiveboardId){
             //embedRef.current.prerenderGeneric();
-            embedRef.current.trigger(HostEvent.Reload)
+            embedRef.current.navigateToLiveboard("")
             embedRef.current.navigateToLiveboard(myLiveboardId)
             setShowNewViz(false) 
         }
