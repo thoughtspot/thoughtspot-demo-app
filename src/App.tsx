@@ -1,20 +1,31 @@
+import { useState } from 'react';
 import './App.css';
 import PerformanceHub from './PerformanceHub';
 import { AuthStatus, AuthType, getSessionInfo, init } from '@thoughtspot/visual-embed-sdk';
 import { FiUser } from 'react-icons/fi';
 
 
-const tsURL = process.env.TS_HOST || 'https://embed-1-do-not-delete.thoughtspotstaging.cloud';
-const authServiceUrl = process.env.AUTH_SERVICE_URL;
-const tsUserName = process.env.TS_USER_NAME;
+const tsURL = process.env.REACT_APP_TS_HOST || 'https://embed-1-do-not-delete.thoughtspotstaging.cloud';
+const authServiceUrl = (process.env.REACT_APP_AUTH_SERVICE_URL || '').endsWith('/')
+  ? (process.env.REACT_APP_AUTH_SERVICE_URL || '').slice(0, -1)
+  : process.env.REACT_APP_AUTH_SERVICE_URL || '';
+
+const tsUserName = process.env.REACT_APP_TS_USER_NAME || 'aditya.mittal';
+const orgId = Number(process.env.REACT_APP_TS_ORG_ID);
 
 function App() {
-
+  const [isInitialised, setIsInitialised] = useState(false);
   init({
     thoughtSpotHost: tsURL+"/",
     authType: AuthType.TrustedAuthToken,
     getAuthToken: () => {
-      return fetch(`${authServiceUrl}/api/v2/gettoken/` + tsUserName)
+      return fetch(`${authServiceUrl}/api/v2/gettoken/` + tsUserName, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({orgId: orgId})
+      })
       .then((r) => r.text())
       .catch((e) => {
         console.log(e);
@@ -47,10 +58,8 @@ function App() {
       }
   }
   
-  }).on(AuthStatus.SUCCESS, (data)=>{
-    getSessionInfo().then((session)=>{
-      console.log(session,"sess")
-    })
+  }).on(AuthStatus.SDK_SUCCESS, ()=>{
+    setIsInitialised(true);
 
   });
   return (
@@ -62,7 +71,7 @@ function App() {
         </div>
       </div>
       <div style={{height:'calc(100% - 4rem)'}} className='flex w-full overflow-auto'>
-      <PerformanceHub tsURL={tsURL}></PerformanceHub>
+      <PerformanceHub tsURL={tsURL} isInitialised={isInitialised}></PerformanceHub>
       </div>
     </div>
   );

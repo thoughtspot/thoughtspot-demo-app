@@ -21,11 +21,13 @@ export enum SelectedTab {
 
 interface TabViewProps{
     tsURL: string,
+    isInitialised: boolean,
 }
 
 const PerformanceHub = (props: TabViewProps) =>{
     const{
         tsURL,
+        isInitialised,
     } = props
     const embedRef = useEmbedRef<typeof LiveboardEmbed>();
     const searchEmbedRef = useEmbedRef<typeof SageEmbed>();
@@ -39,7 +41,7 @@ const PerformanceHub = (props: TabViewProps) =>{
         setLiveboardList(lbList as any);
       }
     fetchLiveboardList();
-    }, []);
+    }, [isInitialised]);
 
 
 
@@ -58,10 +60,10 @@ const PerformanceHub = (props: TabViewProps) =>{
                     <SideNavLink icon={link.icon} linkName={link.name} onClick={link.onClick} isSelected={link.isSelected}></SideNavLink>
                 ))}
             </div>
-            <div style={{width: '100%', overflow: 'auto'}}>
+            <div style={{width: '100%', overflow: 'auto', height: '100%'}}>
             {selectedTab === SelectedTab.ALL && <BrowsePage liveboardList={liveboardList} setMyLiveboardId={setMyLiveboardId} myLiveboardId={myLiveboardId}></BrowsePage>}
             {(selectedTab === SelectedTab.MY ||(selectedTab === SelectedTab.ALL && myLiveboardId)) && <LiveboardEmbed 
-                ref={embedRef} 
+                ref={embedRef}
                 customizations= {
                     {
                     style: {
@@ -82,19 +84,18 @@ const PerformanceHub = (props: TabViewProps) =>{
                                 'display' : 'none !important'
                             }
                         }
-                        
                     }
                     }
                 }
                 }
                 liveboardId={liveboardList?.[0]?.metadata_id || ''}
                 fullHeight={true}
-                frameParams={{width:'100%',height:'100%'}}
+                frameParams={{width:'100%',height:900}}
                 />
             }
             {selectedTab === SelectedTab.NLS && <SageEmbed
                     ref={searchEmbedRef}
-                    frameParams={{width:'100%',height:'100%'}}
+                    frameParams={{width:'100%',height:900}}
                     customizations= {
                         {
                         style: {
