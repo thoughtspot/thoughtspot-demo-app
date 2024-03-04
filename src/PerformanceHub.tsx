@@ -31,14 +31,25 @@ const PerformanceHub = (props: TabViewProps) =>{
     } = props
     const embedRef = useEmbedRef<typeof LiveboardEmbed>();
     const searchEmbedRef = useEmbedRef<typeof SageEmbed>();
-    const [myLiveboardId, setMyLiveboardId] = useState<string | null>(null)
+    const [myLiveboardId, setMyLiveboardId] = useState<string | null>('');
+    const [myLiveboard, setMyLiveboard] = useState<string | null>('');
     const [selectedTab, setSelectedTab] = useState(SelectedTab.MY);
     const [liveboardList, setLiveboardList] = useState([] as any);
 
     useEffect(() => {
-      const fetchLiveboardList = async () => {
+        const fetchLiveboardList = async () => {
         const lbList = await getTSObjectList(tsURL);
+        lbList.sort((a: any, b: any) => {
+        if (a.metadata_header.modifiedBy > b.metadata_header.modifiedBy) {
+            return -1;
+        }
+        if (a.metadata_header.modifiedBy < b.metadata_header.modifiedBy) {
+            return 1;
+        }
+        return 0;
+        });
         setLiveboardList(lbList as any);
+        setMyLiveboardId(lbList?.[0]?.metadata_id || '');
       }
     fetchLiveboardList();
     }, [isInitialised]);
@@ -46,7 +57,7 @@ const PerformanceHub = (props: TabViewProps) =>{
 
 
     const OtherLinks = [
-        { name: SelectedTab.MY, icon: <FiHome/>, onClick:()=>setSelectedTab(SelectedTab.MY),isSelected:selectedTab==SelectedTab.MY ,subMenu:false},
+        { name: liveboardList?.[0]?.metadata_name || '', icon: <FiHome/>, onClick:()=>setSelectedTab(SelectedTab.MY),isSelected:selectedTab==SelectedTab.MY ,subMenu:false},
         { name: SelectedTab.ALL, icon:<IoBarChartSharp />, onClick: () => setSelectedTab(SelectedTab.ALL), isSelected: selectedTab === SelectedTab.ALL, subMenu: false},
         { name: SelectedTab.NLS, icon: <IoSearch />, onClick: () => setSelectedTab(SelectedTab.NLS), isSelected: selectedTab === SelectedTab.NLS, subMenu: false},
     ]
@@ -61,8 +72,8 @@ const PerformanceHub = (props: TabViewProps) =>{
                 ))}
             </div>
             <div style={{width: '100%', overflow: 'auto', height: '100%'}}>
-            {selectedTab === SelectedTab.ALL && <BrowsePage liveboardList={liveboardList} setMyLiveboardId={setMyLiveboardId} myLiveboardId={myLiveboardId}></BrowsePage>}
-            {(selectedTab === SelectedTab.MY ||(selectedTab === SelectedTab.ALL && myLiveboardId)) && <LiveboardEmbed 
+            {selectedTab === SelectedTab.ALL && <BrowsePage liveboardList={liveboardList} setMyLiveboardId={setMyLiveboard} myLiveboardId={myLiveboard}></BrowsePage>}
+            {(selectedTab === SelectedTab.MY || (selectedTab === SelectedTab.ALL && myLiveboard)) && <LiveboardEmbed 
                 ref={embedRef}
                 customizations= {
                     {
@@ -88,7 +99,7 @@ const PerformanceHub = (props: TabViewProps) =>{
                     }
                 }
                 }
-                liveboardId={liveboardList?.[0]?.metadata_id || ''}
+                liveboardId={selectedTab === SelectedTab.ALL ? myLiveboard || '' : myLiveboardId || ''}
                 fullHeight={true}
                 frameParams={{width:'100%',height:900}}
                 />
