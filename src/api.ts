@@ -11,6 +11,10 @@ export const getTSObjectList = async (baseUrl: string) => {
           },
         ],
         record_size: 10,
+        sort_options: {
+          field_name: "MODIFIED",
+          order: "DESC",
+        }
       }),
       credentials: 'include',
     });

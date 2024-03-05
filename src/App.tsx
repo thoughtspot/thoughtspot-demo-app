@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import PerformanceHub from './PerformanceHub';
-import { AuthStatus, AuthType, getSessionInfo, init } from '@thoughtspot/visual-embed-sdk';
-import { FiUser } from 'react-icons/fi';
+import { AuthStatus, AuthType, init } from '@thoughtspot/visual-embed-sdk';
 
 
 const tsURL = process.env.REACT_APP_TS_HOST || 'https://embed-1-do-not-delete.thoughtspotstaging.cloud';
@@ -66,9 +65,6 @@ function App() {
     <div className="App">
       <div className='flex flex-row align-start items-center pl-4 h-16 w-full bg-slate-600 text-white text-2xl font-bold'>
         <div className="flex w-2/4">ThoughtSpot Everywhere</div>
-        <div className="flex w-2/4 align-end justify-end mr-8">
-          <FiUser></FiUser>
-        </div>
       </div>
       <div style={{height:'calc(100% - 4rem)'}} className='flex w-full overflow-auto'>
       <PerformanceHub tsURL={tsURL} isInitialised={isInitialised}></PerformanceHub>

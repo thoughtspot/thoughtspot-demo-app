@@ -39,15 +39,6 @@ const PerformanceHub = (props: TabViewProps) =>{
     useEffect(() => {
         const fetchLiveboardList = async () => {
         const lbList = await getTSObjectList(tsURL);
-        lbList.sort((a: any, b: any) => {
-        if (a.metadata_header.modifiedBy > b.metadata_header.modifiedBy) {
-            return -1;
-        }
-        if (a.metadata_header.modifiedBy < b.metadata_header.modifiedBy) {
-            return 1;
-        }
-        return 0;
-        });
         setLiveboardList(lbList as any);
         setMyLiveboardId(lbList?.[0]?.metadata_id || '');
       }
